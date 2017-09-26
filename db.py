@@ -1,14 +1,31 @@
+#!/usr/bin/env python
 from os import environ
 
 import sqlalchemy
 import ansible_vault
 from unipath import Path
+import fire
+import pandas
 
 from models import Group, Player
 
 
 PROJ = Path(__file__).absolute().parent
 
+class DB:
+    def __init__(self):
+        self._con = connect_to_db()
+
+    def download(self, name):
+        """Download a table from the database."""
+        q = "SELECT * FROM Table_{}".format(name)
+        table = pandas.read_sql(q, self._con)
+        table.to_csv(name+'.csv', index=False)
+
+    def update(self, name):
+        """Force update a table with a local copy."""
+        # table = pandas.read_csv(name+'.csv')
+        # table.to_sql(name, self._con, if_exists="replace")
 
 def connect_to_db():
     url = "mysql+pymysql://{user}:{password}@{host}:{port}/{dbname}".format(
@@ -35,3 +52,7 @@ def get_from_vault(key=None, vault_file='vars/secrets.yml'):
         return data
     else:
         return data.get(key)
+
+if __name__ == '__main__':
+    db = DB()
+    fire.Fire(db)
