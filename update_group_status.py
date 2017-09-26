@@ -1,5 +1,12 @@
 #!/usr/bin/env python
-"""Update the Status column of the Group table of the Totems database."""
+"""Update the Status column of the Group table of the Totems database.
+
+Usage:
+
+$ ./update_group_status.py download  # creates "player_info.csv"
+# manually edit the Status column of player_info.csv
+$ ./update_group_status.py update    # update Status column in db
+"""
 import pandas
 import fire
 

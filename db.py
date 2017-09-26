@@ -4,10 +4,10 @@ import sqlalchemy
 import ansible_vault
 from unipath import Path
 
-from .models import Group, Player
+from models import Group, Player
 
 
-PROJ = Path(__file__).ancestor(2).absolute()
+PROJ = Path(__file__).absolute().parent
 
 
 def connect_to_db():
@@ -22,7 +22,7 @@ def connect_to_db():
     return con
 
 
-def get_from_vault(key=None, vault_file='db/vars/secrets.yml'):
+def get_from_vault(key=None, vault_file='vars/secrets.yml'):
     try:
         ansible_vault_password_file = environ['ANSIBLE_VAULT_PASSWORD_FILE']
     except KeyError:
