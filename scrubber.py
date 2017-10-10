@@ -1,24 +1,32 @@
 #!/usr/bin/env python
 import fire
 import pandas
+from sqlalchemy.orm import sessionmaker
+import models
 import db
+
 
 class Scrubber:
     def __init__(self):
-        self._con = db.connect_to_db()
+        self._engine = db.connect_to_db()
+        self._sessionmaker = sessionmaker(bind=self._engine)
 
-    def remove_participant(self, participant_id):
-        assert self.verify_participant(participant_id)
-        con.execute(
-            db.Group.update()
-                 .values(Status = 'E')
-                 .where(db.Group.c.ID_Group.in_(group_ids))
-        )
+    def remove_player(self, player_id):
+        assert self.verify_player(player_id)
+        session = self._sessionmaker()
+        (session.query(models.Player)
+                .filter_by(ID_Player=player_id)
+                .delete())
 
-    def verify_participant(self, participant_id):
-        participants = pandas.read_sql("SELECT ID_Player FROM Table_Player",
-                                       self._con)
-        return participant_id in participants.ID_Player
+    def verify_player(self, player_id):
+        session = self._sessionmaker()
+        player = (session.query(models.Player)
+                         .filter_by(ID_Player=player_id)
+                         .first())
+        return player != None
+
+    def _query_player(player_id):
+        session = self._sessionmaker()
 
 
 if __name__ == '__main__':
