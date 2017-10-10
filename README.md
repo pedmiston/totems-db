@@ -4,14 +4,14 @@ The Totems experiment requires a MySQL database to be installed on a remote serv
 
 ## Prior to running the ansible playbook
 
-- Make sure you can connect to the server via SSH. This requires `openssh-server` to be installed.
+- Make sure you can connect to the server via SSH. This requires `openssh-server` to be installed on the server.
 - (Optional) Allow sudo commands without password for user. This will make the playbook run without any prompts for passwords.
 
 ## Install ansible in a python virtualenv
 
     virtualenv --python=python2 ~/.venvs/totems
     source ~/.venvs/totems/bin/activate
-    pip install -r requirements/totems-db.txt
+    pip install -r requirements.txt
 
 ## Add an entry into your ansible hosts file for the remote server
 
@@ -26,10 +26,24 @@ You can check that ansible can connect to your server with the following ad-hoc 
 
 ## Run the playbook
 
-    ansible-playbook setup_totems_db.yml
+    ansible-playbook install.yml
 
 ## Creating a backup
 
 Save a backup of the db on the local machine.
 
-    ansible-playbook download_db_dump.yml
+    ansible-playbook snapshot.yml
+
+## Scripts to modify tables
+
+### Download arbitrary table
+
+### Modifying Table_Group.Status
+
+    ./update_group_status.py download  # downloads group statuses to player_info.csv
+    # edit status column of player_info.csv
+    ./update_group_status.py update    # update group statuses in the db based on player_info.csv
+
+### Modify Table_Group.Open
+
+### Delete Table_Group.ID_Player
