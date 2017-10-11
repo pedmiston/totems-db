@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, Boolean, String, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
 
 Base = declarative_base()
 
@@ -12,6 +12,10 @@ class Group(Base):
     Treatment = Column('Treatment', String(10))
     BuildingTime = Column('BuildingTime', Integer())
     Status = Column('Status', String())
+
+    def __repr__(self):
+        return "<Group(ID_Group='%s', Size=%s, Open=%s, Treatment='%s' BuildingTime=%s, Status='%s')>" % (
+                self.ID_Group, self.Size, self.Open, self.Treatment, self.BuildingTime, self.Status)
 
 class Player(Base):
     __tablename__ = 'Table_Player'
@@ -28,3 +32,13 @@ class Player(Base):
     Knowledge = Column('Knowledge', Integer())
     Ancestor = Column('Ancestor', Integer())
     ID_Group = Column('ID_Group', ForeignKey('Table_Group.ID_Group'))
+
+class Totem(Base):
+    __tablename__ = 'Table_Totem'
+    Key_Totem = Column('Key_Totem', Integer(), primary_key=True)
+    Totem1 = Column('Totem1', Integer())
+    Totem2 = Column('Totem2', Integer())
+    Totem3 = Column('Totem3', Integer())
+    ScoreTotem = Column('ScoreTotem', Integer())
+    TotemTime = Column('TotemTime', Integer())
+    ID_Player = Column('ID_Player', ForeignKey('Table_Player.ID_Player'))
