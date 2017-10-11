@@ -56,4 +56,6 @@ def run_sql(ctx, command_file):
     for line in open(command_file).readlines():
         line = line.strip()
         print('Executing: {}'.format(line))
-        # db._engine.execute(line)
+        result = db._engine.execute(line)
+        for row in result:
+            print(result)
