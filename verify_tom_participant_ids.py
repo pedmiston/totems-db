@@ -17,5 +17,6 @@ def enumerate_sessions(chunk):
 
 player_info = player_info.groupby('ID_Group').apply(enumerate_sessions)
 tom_subj_info = player_info.pivot('ID_Group', 'SessionIX')
+tom_subj_info = tom_subj_info.reset_index()
 
 tom_subj_info.to_csv('tom_subj_info.csv', index=False)
