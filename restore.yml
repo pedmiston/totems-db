@@ -15,7 +15,7 @@
       copy:
         src: "dumps/{{ dump }}"
         dest: /dumps/{{ dump }}
-      when: not dump_stat.exists
+      when: not dump_stat.stat.exists
 
     - name: Take a dump of the current database
       mysql_db:
