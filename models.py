@@ -33,6 +33,10 @@ class Player(Base):
     Ancestor = Column('Ancestor', Integer())
     ID_Group = Column('ID_Group', ForeignKey('Table_Group.ID_Group'))
 
+    def __repr__(self):
+        return "<Player(ID_Player='%s', ID_Group='%s')>" % (
+                self.ID_Player, self.ID_Group)
+
 class Totem(Base):
     __tablename__ = 'Table_Totem'
     Key_Totem = Column('Key_Totem', Integer(), primary_key=True)

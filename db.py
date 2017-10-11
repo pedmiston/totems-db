@@ -21,34 +21,34 @@ class DB:
 
     def remove_player(self, player_id):
         session = self._sessionmaker()
-        player = self._query_player(player_id, _session=session)
-        player.delete()
-        session.commit()
+        player = self._query_player(player_id, session=session)
+        # player.delete()
+        # session.commit()
 
     def verify_player(self, player_id):
         return self._query_player(player_id) != None
 
-    def set_group_open(self, group_id, open=False):
+    def toggle_group_open(self, group_id):
         session = self._sessionmaker()
-        group = self._query_team(group_id, _session=session)
-        group.Open = open
+        group = self._query_team(group_id, session=session)
+        group.Open = not group.Open
         session.commit()
 
     def set_group_size(self, group_id, size):
         session = self._sessionmaker()
-        group = self._query_team(group_id, _session=session)
+        group = self._query_team(group_id, session=session)
         group.Size = Size
         session.commit()
 
-    def _query_player(self, player_id, _session=None):
-        session = _session or self._sessionmaker()
+    def _query_player(self, player_id, session=None):
+        session = session or self._sessionmaker()
         player = (session.query(Player)
                          .filter_by(ID_Player=player_id)
                          .first())
         return player
 
-    def _query_team(self, group_id, _session=None):
-        session = _session or self._sessionmaker()
+    def _query_team(self, group_id, session=None):
+        session = session or self._sessionmaker()
         group = (session.query(Group)
                         .filter_by(ID_Group=group_id)
                         .first())

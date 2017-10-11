@@ -24,8 +24,21 @@ def verify_player(ctx, player_id):
     print('ID_Player={}: {}'.format(player_id, exists))
 
 @task
-def toggle_group_open(ctx, group_id):
-    pass
+def print_player_details(self, player_id):
+    db = DB()
+    player = db._query_player(player_id)
+    print(player)
+
+@task
+def print_team_details(self, group_id):
+    db = DB()
+    team = db._query_team(group_id)
+    print(team)
+
+@task
+def toggle_open_group(ctx, group_id):
+    db = DB()
+    db.toggle_group_open(group_id)
 
 @task
 def set_group_size(ctx, group_id, size):
