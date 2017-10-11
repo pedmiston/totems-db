@@ -1,15 +1,21 @@
 ---
-
+# Restore the DB from a snapshot.
+# ansible-playbook restore.yml -e yesterday.sql
 - hosts: lupyanlab
   become: yes
   vars_files:
     - vars/main.yml
     - vars/secrets.yml
   tasks:
+    - name: Check if dump already exists on remote server
+      stat: path=/dumps/{{ dump }}
+      register: dump_stat
+
     - name: Copy database dump from control computer to remote server
       copy:
-        src: "{{ dump }}"
+        src: "dumps/{{ dump }}"
         dest: /dumps/{{ dump }}
+      when: not dump_stat.exists
 
     - name: Take a dump of the current database
       mysql_db:
@@ -17,7 +23,7 @@
         state: dump
         target: /dumps/{{ dump }}.bk
 
-    - name: Drop all tables
+    - name: Import the dump database
       mysql_db:
         name: "{{ db_name }}"
         state: import
