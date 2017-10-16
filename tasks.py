@@ -1,5 +1,6 @@
 from invoke import task
 from db import DB
+from models import Group, Player
 
 @task
 def install(ctx):
@@ -34,6 +35,33 @@ def print_team_details(self, group_id):
     db = DB()
     team = db._query_team(group_id)
     print(team)
+
+@task
+def print_diachronic_teams(self):
+    db = DB()
+    session = db._sessionmaker()
+    results = (session.query(Group)
+                      .filter_by(Treatment='Diachronic', Size=2, Open=False))
+    for r in results:
+        print(r.ID_Group)
+
+@task
+def print_players_in_team(self, group_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = (session.query(Player)
+                      .filter_by(ID_Group=group_id))
+    for r in results:
+        print(r)
+
+@task
+def open_teams(self, group_ids):
+    db = DB()
+    session = db._sessionmaker()
+    for group_id in open(group_ids).readlines():
+        team = db._query_team(group_id.strip(), session)
+        team.Open = True
+    session.commit()
 
 @task
 def toggle_open_group(ctx, group_id):
