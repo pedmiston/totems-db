@@ -41,9 +41,9 @@ def print_diachronic_teams(self):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Group)
-                      .filter_by(Treatment='Diachronic', Size=2, Open=False))
+                      .filter_by(Treatment='Diachronic'))
     for r in results:
-        print(r.ID_Group)
+        print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
 def print_synchronic_teams(self):
@@ -51,8 +51,9 @@ def print_synchronic_teams(self):
     session = db._sessionmaker()
     results = (session.query(Group)
                       .filter_by(Treatment='Synchronic'))
+    print('ID_Group\t\tSize\t\tOpen')
     for r in results:
-        print('{}\t{}\t{}'.format(r.ID_Group, r.Size, r.Open))
+        print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
 def print_players_in_team(self, group_id):
