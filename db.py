@@ -6,7 +6,6 @@ from sqlalchemy.orm import sessionmaker
 
 import ansible_vault
 from unipath import Path
-import fire
 import pandas
 
 from models import Group, Player
