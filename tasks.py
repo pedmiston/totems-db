@@ -2,7 +2,7 @@ from invoke import task
 import pandas
 import db
 from db import DB
-from models import Group, Player
+from models import Group, Player, Workshop
 
 @task
 def verify_tom_participant_ids(ctx):
@@ -69,6 +69,15 @@ def print_diachronic_teams(self):
         print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
+def print_isolated_teams(self):
+    db = DB()
+    session = db._sessionmaker()
+    results = (session.query(Group)
+                      .filter_by(Treatment='Isolated'))
+    for r in results:
+        print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
+
+@task
 def print_synchronic_teams(self):
     db = DB()
     session = db._sessionmaker()
@@ -118,3 +127,22 @@ def run_sql(ctx, command_file):
         line = line.strip()
         print('Executing: {}'.format(line))
         db._engine.execute(line)
+
+
+@task
+def print_trials(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = (session.query(Workshop)
+                      .filter_by(ID_Player=player_id))
+    for r in results:
+        print(r)
+
+
+@task
+def print_n_trials(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = (session.query(Workshop)
+                      .filter_by(ID_Player=player_id))
+    print(len(list(results)))
