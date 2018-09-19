@@ -2,7 +2,7 @@ from invoke import task
 import pandas
 import db
 from db import DB
-from models import Group, Player, Workshop
+from models import Group, Player, Workshop, PlayerObs, Totem, WorkShopObs
 
 @task
 def verify_tom_participant_ids(ctx):
@@ -96,6 +96,39 @@ def print_players_in_team(self, group_id):
     for r in results:
         print(r)
 
+
+@task
+def print_player_obs(self, group_id):
+    db = DB()
+    session = db._sessionmaker()
+    player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
+    for player_id in player_ids:
+        results = session.query(PlayerObs).filter_by(ID_Player=player_id)
+        for r in results:
+            print(r)
+
+@task
+def print_team_totems(self, group_id):
+    db = DB()
+    session = db._sessionmaker()
+    player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
+
+    for player_id in player_ids:
+        results = session.query(Totem).filter_by(ID_Player=player_id)
+        for r in results:
+            print(r)
+
+@task
+def print_team_workshop_obs(self, group_id):
+    db = DB()
+    session = db._sessionmaker()
+    player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
+
+    for player_id in player_ids:
+        results = session.query(WorkShopObs).filter_by(ID_Player=player_id)
+        for r in results:
+            print(r)
+
 @task
 def open_teams(self, group_ids):
     db = DB()
@@ -146,3 +179,18 @@ def print_n_trials(ctx, player_id):
     results = (session.query(Workshop)
                       .filter_by(ID_Player=player_id))
     print(len(list(results)))
+
+
+@task
+def clone_tom_participants(ctx):
+    db = DB()
+    session = db._sessionmaker()
+    ids = [int(participant_id) for participant_id in open("tom-ids.txt")]
+    values = []
+    for participant_id in ids:
+        player = db._query_player(participant_id, session=session)
+        clone_id = int(str(player.ID_Player) + str(player.Ancestor))
+        clone_group = player.ID_Group + "-" + str(player.Ancestor)
+        values.append(dict(ancestor_id=player.ID_Player, ancestor_group=player.ID_Group, clone_id=clone_id, clone_group=clone_group))
+    data = pandas.DataFrame(values).sort_values(by=["ancestor_group", "ancestor_id"])
+    print(data)

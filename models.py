@@ -36,8 +36,8 @@ class Player(Base):
     ID_Group = Column('ID_Group', ForeignKey('Table_Group.ID_Group'))
 
     def __repr__(self):
-        return "<Player(ID_Player='%s', ID_Group='%s', Ancestor='%s')>" % (
-                self.ID_Player, self.ID_Group, self.Ancestor)
+        return "<Player(ID_Player=%s, ID_Group='%s', Ancestor=%s, ID_Number=%s, Score=%s)>" % (
+                self.ID_Player, self.ID_Group, self.Ancestor, self.ID_Number, self.Score)
 
 
 class Totem(Base):
@@ -49,6 +49,11 @@ class Totem(Base):
     ScoreTotem = Column('ScoreTotem', Integer())
     TotemTime = Column('TotemTime', Integer())
     ID_Player = Column('ID_Player', ForeignKey('Table_Player.ID_Player'))
+
+    def __repr__(self):
+        return "<Totem(ID_Player=%s, ScoreTotem=%s, TotemTime=%s)>" % (
+            self.ID_Player, self.ScoreTotem, self.TotemTime
+        )
 
 
 class Workshop(Base):
@@ -66,6 +71,45 @@ class Workshop(Base):
     ID_Player = Column('ID_Player', ForeignKey('Table_Player.ID_Player'))
 
     def __repr__(self):
-        return "<Workshop(ID_Player='%s', WorkShopString='%s', WorkShopResult='%s')>" % (
+        return "<Workshop(ID_Player=%s, WorkShopString='%s', WorkShopResult='%s')>" % (
             self.ID_Player, self.WorkShopString, self.WorkShopResult
+        )
+
+
+class PlayerObs(Base):
+    __tablename__ = 'Table_PlayerObs'
+    ID_Obs = Column("ID_Obs", String(60), primary_key=True)
+    RankObs = Column("RankObs", Integer())
+    RankFocal = Column("RankFocal", Integer())
+    StartTime = Column("StartTime", Integer())
+    StopTime = Column("StopTime", Integer())
+    ID_Player = Column("ID_Player", ForeignKey("Table_Player.ID_Player"))
+
+    def __repr__(self):
+        return "<PlayerObs(ID_Player=%s, RankObs=%s, RankFocal=%s, StartTime=%s, StopTime=%s)>" % (
+            self.ID_Player, self.RankObs, self.RankFocal, self.StartTime, self.StopTime
+        )
+
+
+class Drop(Base):
+    __tablename__ = 'Table_Drop'
+    Key_Drop = Column("Key_Drop", Integer(), primary_key=True)
+    Item = Column("Item", Integer())
+    DragStart = Column("DragStart", Integer())
+    DragEnd = Column("DragEnd", Integer())
+    DropTime = Column("DropTime", Integer())
+    ID_Player = Column("ID_Player", ForeignKey("Table_Player.ID_Player"))
+
+
+class WorkShopObs(Base):
+    __tablename__ = 'Table_WorkShopObs'
+    Key_Tool = Column("Key_Tool", Integer(), primary_key=True)
+    ID_Obs_WS = Column("ID_Obs_WS", String(60))
+    ToolObs = Column("ToolObs", String(60))
+    ToolTime = Column("ToolTime", Integer())
+    ID_Player = Column("ID_Player", ForeignKey("Table_Player.ID_Player"))
+
+    def __repr__(self):
+        return "<WorkShopObs(ID_Player=%s, ID_Obs_WS='%s', ToolObs='%s')>" % (
+            self.ID_Player, self.ID_Obs_WS, self.ToolObs
         )

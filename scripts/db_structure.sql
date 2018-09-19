@@ -75,7 +75,6 @@ ID_Player VARCHAR(60) NOT NULL,
 PRIMARY KEY (Key_Tool) ) ENGINE=InnoDB;
 
 ALTER TABLE Table_Player ADD CONSTRAINT FK_Table_Player_ID_Group FOREIGN KEY (ID_Group) REFERENCES Table_Group (ID_Group);
-
 ALTER TABLE Table_Totem ADD CONSTRAINT FK_Table_Totem_ID_Player FOREIGN KEY (ID_Player) REFERENCES Table_Player (ID_Player);
 ALTER TABLE Table_Workshop ADD CONSTRAINT FK_Table_Workshop_ID_Player FOREIGN KEY (ID_Player) REFERENCES Table_Player (ID_Player);
 ALTER TABLE Table_PlayerObs ADD CONSTRAINT FK_Table_PlayerObs_ID_Player FOREIGN KEY (ID_Player) REFERENCES Table_Player (ID_Player);
