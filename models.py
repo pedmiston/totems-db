@@ -86,8 +86,8 @@ class PlayerObs(Base):
     ID_Player = Column("ID_Player", ForeignKey("Table_Player.ID_Player"))
 
     def __repr__(self):
-        return "<PlayerObs(ID_Player=%s, RankObs=%s, RankFocal=%s, StartTime=%s, StopTime=%s)>" % (
-            self.ID_Player, self.RankObs, self.RankFocal, self.StartTime, self.StopTime
+        return "<PlayerObs(ID_Obs='%s', ID_Player=%s, RankObs=%s, RankFocal=%s, StartTime=%s, StopTime=%s)>" % (
+            self.ID_Obs, self.ID_Player, self.RankObs, self.RankFocal, self.StartTime, self.StopTime
         )
 
 
@@ -99,6 +99,11 @@ class Drop(Base):
     DragEnd = Column("DragEnd", Integer())
     DropTime = Column("DropTime", Integer())
     ID_Player = Column("ID_Player", ForeignKey("Table_Player.ID_Player"))
+
+    def __repr__(self):
+        return '<Drop(ID_Player=%s, Item=%s, DragStart=%s, DragEnd=%s, DropTime=%s)>' % (
+            self.ID_Player, self.Item, self.DragStart, self.DragEnd, self.DropTime
+        )
 
 
 class WorkShopObs(Base):
