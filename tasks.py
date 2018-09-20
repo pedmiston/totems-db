@@ -48,19 +48,19 @@ def verify_player(ctx, player_id):
     print('ID_Player={}: {}'.format(player_id, exists))
 
 @task
-def print_player_details(self, player_id):
+def print_player_details(ctx, player_id):
     db = DB()
     player = db._query_player(player_id)
     print(player)
 
 @task
-def print_team_details(self, group_id):
+def print_team_details(ctx, group_id):
     db = DB()
     team = db._query_team(group_id)
     print(team)
 
 @task
-def print_diachronic_teams(self):
+def print_diachronic_teams(ctx):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Group)
@@ -69,7 +69,7 @@ def print_diachronic_teams(self):
         print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
-def print_isolated_teams(self):
+def print_isolated_teams(ctx):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Group)
@@ -78,7 +78,7 @@ def print_isolated_teams(self):
         print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
-def print_synchronic_teams(self):
+def print_synchronic_teams(ctx):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Group)
@@ -88,7 +88,7 @@ def print_synchronic_teams(self):
         print('{}\t\t{}\t\t{}'.format(r.ID_Group, r.Size, r.Open))
 
 @task
-def print_players_in_team(self, group_id):
+def print_players_in_team(ctx, group_id):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Player)
@@ -98,7 +98,7 @@ def print_players_in_team(self, group_id):
 
 
 @task
-def print_player_obs(self, group_id):
+def print_team_playerobs(ctx, group_id):
     db = DB()
     session = db._sessionmaker()
     player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
@@ -108,7 +108,7 @@ def print_player_obs(self, group_id):
             print(r)
 
 @task
-def print_team_totems(self, group_id):
+def print_team_totems(ctx, group_id):
     db = DB()
     session = db._sessionmaker()
     player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
@@ -119,7 +119,25 @@ def print_team_totems(self, group_id):
             print(r)
 
 @task
-def print_team_workshop_obs(self, group_id):
+def print_totems(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = session.query(Totem).filter_by(ID_Player=player_id)
+    for r in results:
+        print(r)
+
+
+@task
+def print_workshopobs(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = session.query(WorkShopObs).filter_by(ID_Player=player_id)
+    for r in results:
+        print(r)
+
+
+@task
+def print_team_workshopobs(ctx, group_id):
     db = DB()
     session = db._sessionmaker()
     player_ids = [r.ID_Player for r in session.query(Player).filter_by(ID_Group=group_id)]
@@ -129,8 +147,9 @@ def print_team_workshop_obs(self, group_id):
         for r in results:
             print(r)
 
+
 @task
-def open_teams(self, group_ids):
+def open_teams(ctx, group_ids):
     db = DB()
     session = db._sessionmaker()
     for group_id in open(group_ids).readlines():
@@ -143,13 +162,6 @@ def toggle_open_group(ctx, group_id):
     db = DB()
     db.toggle_group_open(group_id)
 
-@task
-def set_group_size(ctx, group_id, size):
-    pass
-
-@task
-def delete_player(ctx, player_id):
-    pass
 
 @task
 def run_sql(ctx, command_file):
@@ -163,7 +175,7 @@ def run_sql(ctx, command_file):
 
 
 @task
-def print_trials(ctx, player_id):
+def print_workshop(ctx, player_id):
     db = DB()
     session = db._sessionmaker()
     results = (session.query(Workshop)
@@ -194,3 +206,76 @@ def clone_tom_participants(ctx):
         values.append(dict(ancestor_id=player.ID_Player, ancestor_group=player.ID_Group, clone_id=clone_id, clone_group=clone_group))
     data = pandas.DataFrame(values).sort_values(by=["ancestor_group", "ancestor_id"])
     print(data)
+
+@task
+def clone_player(ctx, player_id):
+    """Clone a player's data to a new group."""
+    db = DB()
+    session = db._sessionmaker()
+    orig_player = db._query_player(player_id, session=session)
+    orig_group = db._query_team(orig_player.ID_Group, session=session)
+
+    cloned_group = Group(
+        ID_Group=orig_group.ID_Group + "-" + str(orig_player.Ancestor),
+        Size=1,
+        Open=False,
+        Treatment="Isolated",
+        BuildingTime=orig_group.BuildingTime,
+        Status=orig_group.Status,
+    )
+    session.add(cloned_group)
+    session.flush()
+    print(f"Cloned group: {cloned_group}")
+
+    cloned_player = Player(
+        ID_Player=int(str(orig_player.ID_Player) + str(orig_player.Ancestor)),
+        Sex=orig_player.Sex,
+        Age=orig_player.Age,
+        # ID_Number
+        # Status_Start
+        # Status_End
+        # ID_Call
+        # Gain
+        Score=orig_player.Score,
+        BestTotem=orig_player.BestTotem,
+        # Knowledge
+        Ancestor=orig_player.Ancestor,
+        ID_Group=cloned_group.ID_Group
+    )
+    session.add(cloned_player)
+    session.flush()  # creates new ID_Player
+
+    cloned_player.ID_Number = cloned_player.ID_Player
+    print(f"Cloned player: {cloned_player}")
+
+    results = session.query(Workshop).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_workshop in results:
+        w = Workshop(
+            WorkShop1 = orig_workshop.WorkShop1,
+            WorkShop2 = orig_workshop.WorkShop2,
+            WorkShop3 = orig_workshop.WorkShop3,
+            WorkShop4 = orig_workshop.WorkShop4,
+            WorkShopString = orig_workshop.WorkShopString,
+            WorkShopResult = orig_workshop.WorkShopResult,
+            Success = orig_workshop.Success,
+            Innov = orig_workshop.Innov,
+            TrialTime = orig_workshop.TrialTime,
+            ID_Player = cloned_player.ID_Player
+        )
+        session.add(w)
+        session.flush()
+
+    results = session.query(Totem).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_totem in results:
+        t = Totem(
+            Totem1 = orig_totem.Totem1,
+            Totem2 = orig_totem.Totem2,
+            Totem3 = orig_totem.Totem3,
+            ScoreTotem = orig_totem.ScoreTotem,
+            TotemTime = orig_totem.TotemTime,
+            ID_Player = cloned_player.ID_Player
+        )
+        session.add(t)
+        session.flush()
+
+    session.commit()
