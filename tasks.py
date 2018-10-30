@@ -2,38 +2,20 @@ from invoke import task
 import pandas
 import db
 from db import DB
-from models import Group, Player, Workshop, PlayerObs, Totem, WorkShopObs
+from models import Group, Player, Workshop, PlayerObs, Totem, WorkShopObs, Drop
 
-@task
-def verify_tom_participant_ids(ctx):
-    con = db.connect_to_db()
-    player_info = pandas.read_sql("""
-        SELECT ID_Player, Table_Player.ID_Group as ID_Group
-        FROM Table_Player
-        LEFT JOIN Table_Group
-        ON Table_Player.ID_Group = Table_Group.ID_Group
-        WHERE Treatment='Isolated' AND BuildingTime=25
-    """, con)
-
-    def enumerate_sessions(chunk):
-        chunk['SessionIX'] = range(1, len(chunk)+1)
-        return chunk
-
-    player_info = player_info.groupby('ID_Group').apply(enumerate_sessions)
-    tom_subj_info = player_info.pivot('ID_Group', 'SessionIX')
-    tom_subj_info = tom_subj_info.reset_index()
-
-    tom_subj_info.to_csv('tom_subj_info.csv', index=False)
 
 @task
 def install(ctx):
     """Install the totems database on a remote server."""
     ctx.run('ansible-playbook install.yml')
 
+
 @task
 def snapshot(ctx):
     """Take a snapshot of the totems database."""
     ctx.run('ansible-playbook snapshot.yml')
+
 
 @task
 def restore(ctx, dump):
@@ -41,17 +23,32 @@ def restore(ctx, dump):
     cmd = 'ansible-playbook restore.yml -e dump={dump}'
     ctx.run(cmd.format(dump=dump))
 
+
 @task
 def verify_player(ctx, player_id):
     db = DB()
     exists = db.verify_player(player_id)
     print('ID_Player={}: {}'.format(player_id, exists))
 
+
 @task
 def print_player_details(ctx, player_id):
     db = DB()
     player = db._query_player(player_id)
     print(player)
+
+
+@task
+def print_player_ids(ctx):
+    db = DB()
+    session = db._sessionmaker()
+    results = session.query(Player).with_entities(Player.ID_Player)
+    ids = sorted(int(r[0]) for r in results)
+    print(ids)
+
+
+def max_player_id(session):
+    return max(int(r[0]) for r in session.query(Player).with_entities(Player.ID_Player))
 
 @task
 def print_team_details(ctx, group_id):
@@ -103,6 +100,24 @@ def print_team_of_player(ctx, player_id):
     player = db._query_player(player_id)
     results = (session.query(Player)
                       .filter_by(ID_Group=player.ID_Group))
+    for r in results:
+        print(r)
+
+
+@task
+def print_playerobs(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = session.query(PlayerObs).filter_by(ID_Player=player_id)
+    for r in results:
+        print(r)
+
+
+@task
+def print_drop(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    results = session.query(Drop).filter_by(ID_Player=player_id)
     for r in results:
         print(r)
 
@@ -237,27 +252,44 @@ def clone_player(ctx, player_id):
     session.flush()
     print(f"Cloned group: {cloned_group}")
 
+    # cloned_player_id = max_player_id(session) + 1
+    cloned_player_id = str(orig_player.ID_Player) + str(orig_player.Ancestor)
+
     cloned_player = Player(
-        ID_Player=int(str(orig_player.ID_Player) + str(orig_player.Ancestor)),
+        ID_Player=cloned_player_id,
         Sex=orig_player.Sex,
         Age=orig_player.Age,
-        # ID_Number
-        # Status_Start
-        # Status_End
-        # ID_Call
-        # Gain
+        ID_Number=1,
+        Status_Start=orig_player.Status_Start,
+        Status_End=orig_player.Status_End,
+        ID_Call=orig_player.ID_Call,
+        Gain=orig_player.Gain,
         Score=orig_player.Score,
         BestTotem=orig_player.BestTotem,
-        # Knowledge
+        Knowledge=orig_player.Knowledge,
         Ancestor=orig_player.Ancestor,
-        ID_Group=cloned_group.ID_Group
+        ID_Group=cloned_group.ID_Group,
     )
     session.add(cloned_player)
     session.flush()  # creates new ID_Player
-
-    cloned_player.ID_Number = cloned_player.ID_Player
     print(f"Cloned player: {cloned_player}")
 
+    # Totem
+    results = session.query(Totem).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_totem in results:
+        t = Totem(
+            Totem1 = orig_totem.Totem1,
+            Totem2 = orig_totem.Totem2,
+            Totem3 = orig_totem.Totem3,
+            ScoreTotem = orig_totem.ScoreTotem,
+            TotemTime = orig_totem.TotemTime,
+            ID_Player = cloned_player.ID_Player,
+        )
+        session.add(t)
+        session.flush()
+        print(f"Cloned totem: {t}")
+
+    # Workshop
     results = session.query(Workshop).filter_by(ID_Player=orig_player.ID_Player)
     for orig_workshop in results:
         w = Workshop(
@@ -270,22 +302,75 @@ def clone_player(ctx, player_id):
             Success = orig_workshop.Success,
             Innov = orig_workshop.Innov,
             TrialTime = orig_workshop.TrialTime,
+            ID_Player = cloned_player.ID_Player,
+        )
+        session.add(w)
+        session.flush()
+        print(f"Cloned workshop: {w}")
+
+    # PlayerObs
+    results = session.query(PlayerObs).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_playerobs in results:
+        p = PlayerObs(
+            # ID_Obs
+            RankObs = orig_playerobs.RankObs,
+            RankFocal = orig_playerobs.RankFocal,
+            StartTime = orig_playerobs.StartTime,
+            StopTime = orig_playerobs.StopTime,
+            ID_Player = cloned_player.ID_Player,
+        )
+        session.add(p)
+        session.flush()
+        print(f"Cloned playerobs: {p}")
+
+    # Drop
+    results = session.query(Drop).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_drop in results:
+        d = Drop(
+            # Key_Drop
+            Item = orig_drop.Item,
+            DragStart = orig_drop.DragStart,
+            DragEnd = orig_drop.DragEnd,
+            DropTime = orig_drop.DropTime,
+            ID_Player = cloned_player.ID_Player,
+        )
+        session.add(d)
+        session.flush()
+        print(f"Cloned drop: {d}")
+
+    # WorkShopObs
+    results = session.query(WorkShopObs).filter_by(ID_Player=orig_player.ID_Player)
+    for orig_workshopobs in results:
+        w = WorkShopObs(
+            # Key_Tool
+            ID_Obs_WS = orig_workshopobs.ID_Obs_WS,
+            ToolObs = orig_workshopobs.ToolObs,
+            ToolTime = orig_workshopobs.ToolTime,
             ID_Player = cloned_player.ID_Player
         )
         session.add(w)
         session.flush()
-
-    results = session.query(Totem).filter_by(ID_Player=orig_player.ID_Player)
-    for orig_totem in results:
-        t = Totem(
-            Totem1 = orig_totem.Totem1,
-            Totem2 = orig_totem.Totem2,
-            Totem3 = orig_totem.Totem3,
-            ScoreTotem = orig_totem.ScoreTotem,
-            TotemTime = orig_totem.TotemTime,
-            ID_Player = cloned_player.ID_Player
-        )
-        session.add(t)
-        session.flush()
+        print(f"Cloned workshopobs: {w}")
 
     session.commit()
+
+@task
+def verify_tom_participant_ids(ctx):
+    con = db.connect_to_db()
+    player_info = pandas.read_sql("""
+        SELECT ID_Player, Table_Player.ID_Group as ID_Group
+        FROM Table_Player
+        LEFT JOIN Table_Group
+        ON Table_Player.ID_Group = Table_Group.ID_Group
+        WHERE Treatment='Isolated' AND BuildingTime=25
+    """, con)
+
+    def enumerate_sessions(chunk):
+        chunk['SessionIX'] = range(1, len(chunk)+1)
+        return chunk
+
+    player_info = player_info.groupby('ID_Group').apply(enumerate_sessions)
+    tom_subj_info = player_info.pivot('ID_Group', 'SessionIX')
+    tom_subj_info = tom_subj_info.reset_index()
+
+    tom_subj_info.to_csv('tom_subj_info.csv', index=False)
