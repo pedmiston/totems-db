@@ -96,6 +96,16 @@ def print_players_in_team(ctx, group_id):
     for r in results:
         print(r)
 
+@task
+def print_team_of_player(ctx, player_id):
+    db = DB()
+    session = db._sessionmaker()
+    player = db._query_player(player_id)
+    results = (session.query(Player)
+                      .filter_by(ID_Group=player.ID_Group))
+    for r in results:
+        print(r)
+
 
 @task
 def print_team_playerobs(ctx, group_id):
